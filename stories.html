@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>استوری‌ها</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#2e9e48;--dark:#1f2326;--muted:#8a9099;--bg:#f4f5f7;--line:#e7e9ed;--warn:#b91c1c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Vazirmatn',Tahoma,sans-serif;background:var(--bg);color:#1c2024;padding-bottom:96px}
+header{background:var(--dark);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:18px}
+header p{margin:4px 0 0;font-size:12px;color:#c3c8ce;line-height:1.8}
+.wrap{padding:12px}
+.login{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;display:none}
+.login p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.in{height:40px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font-size:14px;font-family:inherit;background:#fff;outline:none;width:100%;min-width:0}
+.in:focus{border-color:var(--green)}
+textarea.in{height:auto;min-height:56px;padding:8px 10px;resize:vertical;line-height:1.7}
+.btn{height:42px;padding:0 16px;border-radius:10px;background:var(--green);color:#fff;font-weight:700;font-family:inherit;border:0;font-size:14px;width:100%}
+.tools{display:flex;gap:8px;margin-bottom:12px}
+.tools button{flex:1;height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;font-family:inherit;font-weight:700;font-size:13px;color:#1c2024}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;display:grid;grid-template-columns:72px 1fr;gap:10px}
+.card.failed{border-color:var(--warn)}
+.pic{width:72px;height:128px;border-radius:12px;background:#eceef1;overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.fields{display:flex;flex-direction:column;gap:6px;min-width:0}
+.state{font-size:12px;min-height:16px}
+.state.ok{color:#15803d}
+.state.bad{color:var(--warn)}
+.del{align-self:flex-start;background:none;border:0;color:var(--warn);font-family:inherit;font-size:12px;padding:0}
+.empty{text-align:center;color:var(--muted);padding:30px 0;font-size:14px}
+h2{font-size:15px;margin:18px 0 8px}
+.act{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;font-size:12px;display:flex;flex-direction:column;gap:6px}
+.sc img{width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:8px;background:#eceef1;display:block}
+.sc span{line-height:1.6;min-height:20px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sc button{height:32px;border:0;border-radius:8px;background:#fde8e8;color:var(--warn);font-family:inherit;font-weight:700;font-size:12px}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.bottom button{width:100%;height:48px;border:0;border-radius:12px;background:var(--dark);color:#fff;font-weight:800;font-size:15px;font-family:inherit}
+.bottom button[disabled]{background:#c9cdd3}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);background:#222;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:50;transition:.25s;max-width:90%}
+.toast.show{transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎞 استوری‌ها</h1>
+  <p>چند عکس را یک‌جا انتخاب کنید؛ برای هر عکس یک استوری ساخته می‌شود. استوری‌ها ۲۴ ساعت در مینی‌اپ دیده می‌شوند و بعد خودکار جمع می‌شوند.</p>
+</header>
+
+<div class="wrap">
+  <div class="login" id="loginBox">
+    <p>کلید مدیر را یک‌بار وارد کنید (روی همین دستگاه ذخیره می‌شود):</p>
+    <input class="in" id="keyIn" type="password" placeholder="کلید مدیر">
+    <button class="btn" style="margin-top:8px" onclick="saveKey()">ورود</button>
+  </div>
+
+  <div class="tools" id="tools" style="display:none">
+    <button onclick="$('multi').click()">📷 انتخاب چند عکس</button>
+  </div>
+  <input type="file" id="multi" accept="image/*" multiple hidden onchange="addFiles(this.files); this.value=''">
+
+  <div id="list"></div>
+
+  <h2 id="activeH" style="display:none">استوری‌های فعال (۲۴ ساعت اخیر)</h2>
+  <div class="act" id="active"></div>
+</div>
+
+<div class="bottom"><button id="submitBtn" disabled onclick="submitAll()">📤 ثبت همه</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======= آدرس Web App اپ اسکریپت (همان آدرس مینی‌اپ) ======= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQgLIT51gZsVaGpmBdjngJMK2HKZ7vw_IKbL2XIeF9j4-FL1oKe6n1hYaZH4Hex8hU5g/exec';
+/* ============================================================ */
+
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const $ = id => document.getElementById(id);
+const fa = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+let KEY = '';
+try { KEY = localStorage.getItem('adminKey') || ''; } catch (e) {}
+let PRODUCTS = [];
+let ROWS = []; // هر ردیف: {file, preview, caption, productId, state, done}
+let busy = false;
+
+function toast(t) {
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+async function api(body) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ key: KEY }, body)),
+  });
+  return r.json();
+}
+
+function saveKey() {
+  KEY = $('keyIn').value.trim();
+  try { localStorage.setItem('adminKey', KEY); } catch (e) {}
+  load();
+}
+
+async function load() {
+  if (!KEY) { $('loginBox').style.display = 'block'; return; }
+  try {
+    const j = await api({ action: 'adminProducts' });
+    if (!j.ok) {
+      KEY = '';
+      try { localStorage.removeItem('adminKey'); } catch (e) {}
+      $('loginBox').style.display = 'block';
+      toast('کلید مدیر درست نیست');
+      return;
+    }
+    PRODUCTS = j.data || [];
+    $('loginBox').style.display = 'none';
+    $('tools').style.display = 'flex';
+    renderRows();
+    loadActive();
+  } catch (e) {
+    toast('خطای ارتباط با سرور، دوباره تلاش کنید');
+  }
+}
+
+/* ---------- ردیف‌ها ---------- */
+
+function newRow(file) {
+  return { file: file, preview: URL.createObjectURL(file), caption: '', productId: '', state: null };
+}
+
+function addFiles(files) {
+  Array.from(files || []).forEach(f => ROWS.push(newRow(f)));
+  renderRows();
+}
+
+function setF(i, field, value) {
+  ROWS[i][field] = value;
+  updateSubmit();
+}
+
+function delRow(i) {
+  ROWS.splice(i, 1);
+  renderRows();
+}
+
+function rowHtml(r, i) {
+  const opts = '<option value="">بدون لینک به محصول</option>' + PRODUCTS.map(p =>
+    '<option value="' + esc(p.id) + '"' + (p.id === r.productId ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('');
+  const stClass = r.state ? (r.state.ok ? 'ok' : 'bad') : '';
+  const stMsg = r.state ? r.state.msg : '';
+  return '<div class="card' + (r.state && !r.state.ok ? ' failed' : '') + '">' +
+    '<div class="pic"><img src="' + esc(r.preview) + '" alt=""></div>' +
+    '<div class="fields">' +
+      '<textarea class="in" rows="2" placeholder="متن استوری (اختیاری)" oninput="setF(' + i + ', \'caption\', this.value)">' + esc(r.caption) + '</textarea>' +
+      '<select class="in" onchange="setF(' + i + ', \'productId\', this.value)">' + opts + '</select>' +
+      '<div class="state ' + stClass + '">' + esc(stMsg) + '</div>' +
+      '<button class="del" onclick="delRow(' + i + ')">🗑 حذف</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderRows() {
+  if (!KEY) { $('list').innerHTML = ''; updateSubmit(); return; }
+  $('list').innerHTML = ROWS.length
+    ? ROWS.map(rowHtml).join('')
+    : '<div class="empty">هنوز عکسی انتخاب نشده. از دکمه‌ی «انتخاب چند عکس» شروع کنید.</div>';
+  updateSubmit();
+}
+
+function updateSubmit() {
+  const n = ROWS.length;
+  $('submitBtn').disabled = n === 0 || busy;
+  $('submitBtn').textContent = n ? '📤 ثبت همه (' + fa(n) + ' استوری)' : '📤 ثبت همه';
+}
+
+/* ---------- کوچک‌سازی و ارسال ---------- */
+
+// عکس را کوچک و فشرده می‌کنیم تا ارسال سریع باشد
+function shrink(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 900;
+      const ratio = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * ratio);
+      c.height = Math.round(img.height * ratio);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      const data = c.toDataURL('image/jpeg', 0.85);
+      URL.revokeObjectURL(url);
+      resolve(data.split(',')[1]);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('image')); };
+    img.src = url;
+  });
+}
+
+function errText(code) {
+  const map = {
+    image: 'عکس درست نیست',
+    product: 'این محصول پیدا نشد',
+    forbidden: 'کلید مدیر درست نیست',
+  };
+  return map[code] || 'ثبت نشد، دوباره تلاش کنید';
+}
+
+async function submitAll() {
+  if (busy || !ROWS.length) return;
+  busy = true; updateSubmit();
+  let ok = 0, fail = 0;
+  for (const r of ROWS.slice()) {
+    r.state = { ok: true, msg: 'در حال ثبت...' }; renderRows();
+    try {
+      const j = await api({
+        action: 'adminAddStory',
+        image: await shrink(r.file),
+        caption: String(r.caption || '').trim(),
+        productId: r.productId,
+      });
+      if (j.ok) { r.done = true; r.state = { ok: true, msg: '✅ ثبت شد' }; ok++; }
+      else { r.state = { ok: false, msg: errText(j.error) }; fail++; }
+    } catch (e) {
+      r.state = { ok: false, msg: 'خطای ارتباط یا عکس، دوباره تلاش کنید' }; fail++;
+    }
+    renderRows();
+  }
+  // ردیف‌های ثبت‌شده حذف می‌شوند تا فقط موارد باقی‌مانده بماند
+  ROWS = ROWS.filter(r => !r.done);
+  busy = false;
+  renderRows();
+  loadActive();
+  toast('✅ ' + fa(ok) + ' استوری ثبت شد' + (fail ? ' | ' + fa(fail) + ' ردیف ناموفق' : ''));
+}
+
+/* ---------- استوری‌های فعال ---------- */
+
+async function loadActive() {
+  try {
+    const j = await api({ action: 'adminStories' });
+    if (!j.ok) return;
+    const list = j.data || [];
+    $('activeH').style.display = list.length ? 'block' : 'none';
+    $('active').innerHTML = list.map(s =>
+      '<div class="sc"><img src="' + esc(s.image) + '" alt="">' +
+      '<span>' + esc(s.caption || 'بدون متن') + '</span>' +
+      '<button onclick="removeStory(\'' + esc(s.id) + '\')">حذف</button></div>').join('');
+  } catch (e) {}
+}
+
+async function removeStory(id) {
+  if (!confirm('این استوری حذف شود؟')) return;
+  try {
+    const j = await api({ action: 'adminDeleteStory', id: id });
+    toast(j.ok ? '🗑 استوری حذف شد' : 'حذف انجام نشد');
+    loadActive();
+  } catch (e) {
+    toast('خطای ارتباط با سرور، دوباره تلاش کنید');
+  }
+}
+
+load();
+</script>
+</body>
+</html>

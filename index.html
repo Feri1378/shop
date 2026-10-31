@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>فروشگاه</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#2e9e48; --green-d:#23863b; --lime:#7ed957;
+  --dark:#1f2326; --text:#1c2024; --muted:#8a9099;
+  --bg:#f4f5f7; --card:#fff; --line:#e7e9ed; --chip:#eef0f3;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:'Vazirmatn',Tahoma,sans-serif;background:var(--bg);color:var(--text);padding-bottom:96px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit;cursor:pointer;border:0}
+input{font-family:inherit}
+
+/* header */
+.hd{background:linear-gradient(135deg,#1c2023 0%,#262b2e 60%,#1d3a26 140%);color:#fff;padding:16px 16px 18px;display:flex;align-items:center;gap:12px}
+.logo{width:68px;height:68px;border-radius:50%;border:2px solid var(--lime);background:#111;flex:none;overflow:hidden;display:grid;place-items:center;font-size:30px}
+.logo img{width:100%;height:100%;object-fit:cover}
+.hd-t{flex:1;min-width:0}
+.hd-t h1{margin:0;font-size:21px;font-weight:800;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-t p{margin:2px 0 0;font-size:12px;color:#c3c8ce;line-height:1.6}
+.bot{display:flex;align-items:center;gap:7px;color:#fff;text-decoration:none;font-size:12px;opacity:.95;flex:none}
+.bot svg{width:26px;height:26px}
+
+/* search + chips */
+.wrap{padding:0 14px}
+.search{margin-top:14px;position:relative}
+.search input{width:100%;height:46px;border-radius:23px;border:1px solid var(--line);background:#fff;padding:0 44px 0 16px;font-size:14px;outline:none}
+.search input:focus{border-color:var(--green)}
+.search svg{position:absolute;right:15px;top:13px;width:20px;height:20px;color:#6b7280}
+.chips{display:flex;gap:10px;overflow-x:auto;padding:14px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:21px;background:var(--chip);color:#2a2f35;font-size:14px;font-weight:600;transition:.15s}
+.chip.on{background:var(--green);color:#fff}
+.chip .i{font-size:16px;line-height:1}
+
+/* grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pic{position:relative;aspect-ratio:1/0.82;background:#eceef1;overflow:hidden}
+.pic img{width:100%;height:100%;object-fit:cover;display:block}
+.pic .ph{width:100%;height:100%;display:grid;place-items:center;font-size:44px;color:#b9bec6}
+.badge{position:absolute;top:9px;right:9px;background:rgba(25,32,28,.88);color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:14px;display:flex;align-items:center;gap:4px}
+.badge svg{width:13px;height:13px;color:#ff7a2f}
+.oos{position:absolute;inset:0;background:rgba(255,255,255,.72);display:grid;place-items:center;font-weight:800;color:#6b7280}
+.info{padding:10px 11px 12px;display:flex;flex-direction:column;gap:5px;flex:1}
+.nm{font-size:14.5px;font-weight:700;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ds{font-size:11.5px;color:var(--muted);line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pr{font-size:17px;font-weight:800;color:var(--green);margin-top:auto;padding-top:4px}
+.pr small{font-size:13px;font-weight:700}
+.buy{margin-top:6px;width:100%;height:44px;border-radius:10px;background:var(--green);color:#fff;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px}
+.buy:active{background:var(--green-d)}
+.buy svg{width:20px;height:20px}
+.buy[disabled]{background:#c9cdd3}
+.step{margin-top:6px;height:44px;border-radius:10px;background:#e8f5ec;display:flex;align-items:center;justify-content:space-between;padding:0 6px}
+.step button{width:36px;height:34px;border-radius:8px;background:var(--green);color:#fff;font-size:20px;font-weight:700;line-height:1}
+.step span{font-weight:800;font-size:16px;color:var(--green-d)}
+
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:50px 0;font-size:14px}
+.sk{height:300px;border-radius:14px;background:linear-gradient(90deg,#eceef1 25%,#f6f7f9 50%,#eceef1 75%);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+
+/* cart bar */
+.bar{position:fixed;left:12px;right:12px;bottom:12px;z-index:20;background:var(--dark);color:#fff;border-radius:16px;height:60px;display:none;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 8px 24px rgba(0,0,0,.25);width:auto}
+.bar.show{display:flex}
+.bar .l{display:flex;align-items:center;gap:10px;font-weight:700}
+.bar .cnt{background:var(--green);border-radius:50%;min-width:28px;height:28px;display:grid;place-items:center;font-size:13px;padding:0 4px}
+.bar .tot{font-weight:800;font-size:15px}
+
+/* sheet */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;opacity:0;pointer-events:none;transition:.2s}
+.ov.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:#fff;border-radius:22px 22px 0 0;max-height:86vh;display:flex;flex-direction:column;transform:translateY(105%);transition:.25s}
+.sheet.show{transform:none}
+.sh-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px}
+.sh-h h2{margin:0;font-size:17px}
+.x{width:34px;height:34px;border-radius:50%;background:var(--chip);font-size:18px;color:#444}
+.sh-b{overflow:auto;padding:0 18px}
+.it{display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.it img,.it .ph{width:60px;height:60px;border-radius:10px;object-fit:cover;background:#eceef1;flex:none;display:grid;place-items:center;font-size:24px;color:#b9bec6}
+.it .m{flex:1;min-width:0}
+.it .m b{display:block;font-size:13.5px;line-height:1.6}
+.it .m span{font-size:13px;color:var(--green);font-weight:700}
+.qty{display:flex;align-items:center;gap:8px}
+.qty button{width:30px;height:30px;border-radius:8px;background:var(--chip);font-size:18px;font-weight:700}
+.qty b{min-width:20px;text-align:center}
+.sh-f{padding:14px 18px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sum{display:flex;justify-content:space-between;font-weight:800;font-size:16px;margin-bottom:12px}
+.go{width:100%;height:50px;border-radius:12px;background:var(--green);color:#fff;font-weight:800;font-size:16px}
+.go[disabled]{opacity:.6}
+.note{font-size:12px;color:var(--muted);text-align:center;margin-top:9px;line-height:1.8}
+.dimg{width:100%;aspect-ratio:1/0.8;object-fit:cover;border-radius:14px;background:#eceef1;display:block}
+.dph{display:grid;place-items:center;font-size:60px;color:#b9bec6}
+.dhot{display:inline-flex;align-items:center;gap:4px;margin-top:10px;background:var(--dark);color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:14px}
+.dhot svg{width:13px;height:13px;color:#ff7a2f}
+.dpr{font-size:21px;font-weight:800;color:var(--green);margin-top:12px}
+.dpr small{font-size:13px}
+.dmeta{font-size:12.5px;color:var(--muted);margin-top:6px}
+.dtitle{font-weight:800;font-size:15px;margin:18px 0 8px}
+.ddesc{font-size:14px;line-height:2.1;color:#3b4149;white-space:pre-line;background:#f7f8fa;border-radius:12px;padding:12px 14px;margin-bottom:12px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);background:#222;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:50;transition:.25s;max-width:90%}
+.toast.show{transform:translateX(-50%)}
+.mq{font-size:11px;color:#b45309;background:#fff7ed;border-radius:8px;padding:3px 8px;align-self:flex-start}
+.rt{font-size:12px;color:#8a6d00;font-weight:600}
+.fav{position:absolute;top:8px;left:8px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);font-size:18px;color:#9aa0a8;display:grid;place-items:center;z-index:2}
+.fav.on{color:#e0245e}
+.lk{position:absolute;bottom:8px;left:8px;height:30px;padding:0 10px;border-radius:15px;background:rgba(255,255,255,.92);font-size:13px;font-weight:700;color:#444;z-index:2}
+.lk.on{color:#1d4ed8;background:#e8f0ff}
+.lk.st{position:static;display:inline-flex;align-items:center;margin-top:10px;height:34px}
+.notify{background:#1f2326}
+.notify:active{background:#000}
+.minnote{display:none;font-size:12.5px;color:#b45309;background:#fff7ed;border-radius:10px;padding:9px 12px;margin-bottom:10px;line-height:1.9}
+.minnote.show{display:block}
+.sm{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.rev{border-top:1px solid var(--line);padding:10px 0;font-size:13px;line-height:1.9}
+.rev b{font-size:13px}
+.rev .st{color:#d4a100;font-size:12px}
+.lowb{position:absolute;bottom:8px;right:8px;background:#b91c1c;color:#fff;font-size:11px;font-weight:700;border-radius:8px;padding:3px 8px;z-index:2}
+.gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:14px;scrollbar-width:none}
+.gal::-webkit-scrollbar{display:none}
+.gal img{flex:0 0 100%;width:100%;aspect-ratio:1/0.8;object-fit:cover;background:#eceef1;scroll-snap-align:start;display:block}
+.askbox{font-size:12.5px;line-height:1.9;color:#3b4149;background:#f7f8fa;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.gorow{display:flex;gap:8px}
+.gorow .go{flex:1;width:auto}
+.sellerb{flex:0 0 42%;height:50px;border-radius:12px;background:#fff;border:2px solid var(--green);color:var(--green);font-weight:800;font-size:14px}
+.enamad{display:flex;justify-content:center;margin-top:12px;min-height:0}
+.enamad:empty{display:none}
+.fab{position:fixed;right:12px;bottom:84px;width:60px;height:60px;border-radius:50%;background:var(--green);border:0;z-index:25;place-items:center;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.fabp{position:fixed;right:12px;bottom:156px;width:240px;background:#fff;border-radius:16px;padding:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);z-index:26;display:none}
+.fabp.show{display:block}
+.fabh{font-weight:800;font-size:14px;margin-bottom:8px}
+.fabr{display:flex;gap:8px;align-items:center;width:100%;padding:10px;border-radius:10px;background:#f4f6f8;color:#1f2326;text-decoration:none;font-size:14px;margin-bottom:6px;border:0;font-family:inherit}
+.announce{margin:10px 12px 0;background:#fff7d6;border:1px solid #f5d76e;color:#7a5a00;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;line-height:1.8}
+.dmrow{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:6px}
+.dmrow .dmeta{margin-top:0}
+.stkq{background:#1d4ed8;color:#fff;border:0;border-radius:10px;padding:7px 11px;font-size:12.5px;font-weight:700;font-family:inherit}
+.stkq:active{background:#1e40af}
+.dollar{margin:10px 12px 0;background:#1f2326;color:#fff;border-radius:12px;padding:9px 12px;font-size:14px;line-height:1.8}
+.dollar b{color:var(--lime)}
+.dollar small{color:#a9b0b7;font-size:11.5px}
+.stories{display:none;gap:12px;overflow-x:auto;padding:12px 12px 2px;scrollbar-width:none}
+.stories::-webkit-scrollbar{display:none}
+.st-it{flex:0 0 68px;display:flex;flex-direction:column;align-items:center;gap:5px;background:none;border:0;padding:0;font-family:inherit;color:var(--dark);font-size:11.5px;font-weight:700}
+.st-ring{width:66px;height:66px;border-radius:50%;padding:2.5px;background:linear-gradient(45deg,#f58529,#dd2a7b,#8134af)}
+.st-ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid #fff;display:block;background:#eceef1}
+.st-lbl{max-width:68px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv{position:fixed;inset:0;background:#000;z-index:60;display:none;flex-direction:column;align-items:center;justify-content:center}
+.sv img{max-width:100%;max-height:82vh;object-fit:contain}
+.sv-cap{position:relative;z-index:2;color:#fff;font-size:14px;line-height:1.9;padding:10px 18px;text-align:center;min-height:20px}
+.sv-btn{position:relative;z-index:2;background:var(--green);color:#fff;border:0;border-radius:12px;padding:10px 18px;font-family:inherit;font-weight:800;font-size:14px}
+.sv-l,.sv-r{position:absolute;top:0;bottom:0;width:50%;z-index:1}
+.sv-l{left:0}
+.sv-r{right:0}
+.sv-x{position:absolute;top:12px;left:12px;z-index:3;width:36px;height:36px;border-radius:50%;border:0;background:rgba(255,255,255,.2);color:#fff;font-size:16px}
+.sv-bar{position:absolute;top:10px;left:56px;right:56px;display:flex;gap:4px;z-index:3}
+.sv-bar i{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:3px}
+.sv-bar i.on{background:#fff}
+.lowstrip{display:none;margin-top:10px}
+.lowh{font-weight:800;font-size:13.5px;color:#b91c1c;margin:0 2px 6px}
+.lowrow{display:flex;gap:10px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.lowrow::-webkit-scrollbar{display:none}
+.lowit{flex:0 0 118px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:6px;font-family:inherit;display:flex;flex-direction:column;gap:4px;align-items:center;color:var(--dark)}
+.lowit img,.lowit .ph{width:100%;height:84px;object-fit:cover;border-radius:8px;background:#eceef1;display:grid;place-items:center;font-size:28px;color:#b9bec6}
+.lowit span{font-size:12px;font-weight:700;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:100%}
+.lowit b{font-size:11.5px;color:#b91c1c}
+.newb{position:absolute;bottom:8px;left:8px;background:#1d4ed8;color:#fff;font-size:11px;font-weight:700;border-radius:8px;padding:3px 8px;z-index:2}
+.sortrow{display:flex;justify-content:flex-end;margin-top:6px}
+.sortrow select{height:36px;border:1px solid var(--line);border-radius:10px;padding:0 10px;font-family:inherit;font-size:13px;background:#fff;color:#1f2326}
+.shipprog{display:none;font-size:12.5px;color:#3b4149;margin-bottom:10px;line-height:1.9;background:#f0faf3;border-radius:10px;padding:8px 10px}
+.shipprog b{color:var(--green)}
+.pbar{height:8px;background:#e3e6ea;border-radius:6px;overflow:hidden;margin-top:6px}
+.pbar i{display:block;height:100%;background:var(--green);border-radius:6px}
+.sugg{margin-top:8px}
+.sugg-h{font-weight:800;font-size:14px;margin:6px 0 2px}
+.shb{background:#f4f6f8;color:#1f2326;border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-size:12.5px;font-weight:700;font-family:inherit}
+</style>
+</head>
+<body>
+
+<header class="hd">
+  <div class="logo" id="logo">🛍</div>
+  <div class="hd-t">
+    <h1 id="shopName">فروشگاه</h1>
+    <p id="tagline"></p>
+  </div>
+  <a class="bot" id="botLink" href="#">
+    <svg viewBox="0 0 24 24" fill="#fff"><path d="M21.9 3.6 2.6 11c-1.3.5-1.3 1.3-.2 1.6l4.9 1.5 1.9 5.8c.2.6.4.8.9.8.4 0 .6-.2.9-.4l2.4-2.3 4.9 3.6c.9.5 1.5.2 1.8-.8L23 5c.3-1.3-.5-1.9-1.1-1.4ZM8.4 13.4l9.9-6.2c.5-.3.9-.1.5.2l-8.2 7.4-.3 3.4-1.9-4.8Z"/></svg>
+    <span>ربات فروشگاه</span>
+  </a>
+</header>
+<div class="announce" id="announce" style="display:none"></div>
+<div class="stories" id="stories"></div>
+
+<main class="wrap">
+  <div class="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="جستجوی محصولات..." autocomplete="off">
+  </div>
+  <div class="lowstrip" id="lowStrip"></div>
+  <div class="chips" id="chips"></div>
+  <div class="sortrow"><select id="sort" aria-label="مرتب‌سازی">
+    <option value="def">مرتب‌سازی: پیش‌فرض</option>
+    <option value="cheap">ارزان‌ترین</option>
+    <option value="exp">گران‌ترین</option>
+    <option value="pop">پرفروش‌ترین</option>
+  </select></div>
+  <div class="grid" id="grid"><div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div></div>
+</main>
+
+<div class="sv" id="sv">
+  <div class="sv-bar" id="svBar"></div>
+  <button class="sv-x" onclick="closeStory()">✕</button>
+  <img id="svImg" alt="">
+  <div class="sv-cap" id="svCap"></div>
+  <button class="sv-btn" id="svBtn" onclick="storyProduct()" style="display:none">🛍 مشاهده‌ی محصول</button>
+  <div class="sv-l" onclick="stepStory(1)"></div>
+  <div class="sv-r" onclick="stepStory(-1)"></div>
+</div>
+<div class="bar" id="bar" onclick="openCart()">
+  <div class="l"><span class="cnt" id="bCnt">۰</span><span>مشاهده سبد خرید</span></div>
+  <div class="tot" id="bTot"></div>
+</div>
+
+<div class="ov" id="ov" onclick="closeCart()"></div>
+<div class="sheet" id="sheet">
+  <div class="sh-h"><h2>🛒 سبد خرید</h2><button class="x" onclick="closeCart()">✕</button></div>
+  <div class="sh-b" id="cartList"></div>
+  <div class="sh-f">
+    <div class="sm"><span>هزینه ارسال: </span><span id="cShip"></span></div>
+    <div class="shipprog" id="shipProg"></div>
+    <div class="sum"><span>مبلغ کل</span><span id="cTot"></span></div>
+    <div class="minnote" id="minNote"></div>
+    <div class="askbox">احتراماً، پیش از ثبت نهایی سفارش، لطفاً موجودی کالای مورد نظر را از فروشنده استعلام فرمایید. برای این کار روی «💬 ارتباط با فروشنده» بزنید و پیام خود را بفرستید. 🙏</div>
+    <div class="gorow">
+      <button class="sellerb" onclick="contactSeller()">💬 ارتباط با فروشنده</button>
+      <button class="go" id="go" onclick="checkout()">ثبت سفارش و پرداخت</button>
+    </div>
+    <div class="note">بعد از ثبت سفارش، فاکتور و شماره کارت یا شبا داخل ربات برایتان ارسال می‌شود.</div>
+    <!-- ENAMAD: کد اینماد را اینجا بچسبانید -->
+    <div class="enamad" id="enamad"></div>
+  </div>
+</div>
+<div class="ov" id="dov" onclick="closeDetail()"></div>
+<div class="sheet" id="dsheet">
+  <div class="sh-h"><h2 id="dTitle"></h2><button class="x" onclick="closeDetail()">✕</button></div>
+  <div class="sh-b" id="dBody"></div>
+  <div class="sh-f" id="dAct"></div>
+</div>
+<button class="fab" id="fab" onclick="toggleFab()" aria-label="پشتیبانی فروشگاه" style="display:none">
+  <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true">
+    <path d="M14 30C14 13 50 13 50 30" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <rect x="10" y="28" width="8" height="12" rx="3" fill="#fff"/>
+    <rect x="46" y="28" width="8" height="12" rx="3" fill="#fff"/>
+    <path d="M52 40C52 50 44 52 37 52" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="35" cy="52" r="3" fill="#fff"/>
+    <path d="M16 62C16 46 48 46 48 62Z" fill="#fff"/>
+    <circle cx="32" cy="28" r="11" fill="#fcd9b6"/>
+    <path d="M21 27C20 14 44 14 43 27C40 21 25 20 21 27Z" fill="#2b2b2b"/>
+    <circle cx="28" cy="29" r="1.6" fill="#2b2b2b"/>
+    <circle cx="36" cy="29" r="1.6" fill="#2b2b2b"/>
+  </svg>
+</button>
+<div class="fabp" id="fabp">
+  <div class="fabh">پشتیبانی فروشگاه</div>
+  <a class="fabr" id="fabPhone" href="#"><span>📞</span><span id="fabPhoneTxt"></span></a>
+  <a class="fabr" id="fabId" href="#" target="_blank"><span>🆔</span><span id="fabIdTxt"></span></a>
+  <button class="fabr" onclick="contactSeller()"><span>💬</span><span>پیام به فروشنده</span></button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======= تنظیم: آدرس Web App اپ اسکریپت را اینجا بذار ======= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQgLIT51gZsVaGpmBdjngJMK2HKZ7vw_IKbL2XIeF9j4-FL1oKe6n1hYaZH4Hex8hU5g/exec';
+/* ============================================================ */
+
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); try { tg.setHeaderColor('#1f2326'); tg.setBackgroundColor('#f4f5f7'); } catch (e) {} }
+
+const $ = id => document.getElementById(id);
+const fa = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+// قیمت‌ها در مینی‌اپ به «هزار تومان» نمایش داده می‌شوند (بدون سه صفر): ۱۲۵٬۰۰۰ تومان → ۱۲۵ هزار
+const money = n => fa(String(Math.round((Number(n) || 0) / 1000)).replace(/\B(?=(\d{3})+(?!\d))/g, ',')) + ' هزار';
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const norm = s => String(s).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/ي/g, 'ی').replace(/ك/g, 'ک').toLowerCase();
+
+let DATA = { shop: {}, categories: [], products: [] };
+let cat = 'all', query = '';
+let cart = {};
+try { cart = JSON.parse(localStorage.getItem('cart') || '{}'); } catch (e) {}
+const saveCart = () => { try { localStorage.setItem('cart', JSON.stringify(cart)); } catch (e) {} };
+
+// علاقه‌مندی‌ها (روی همین دستگاه ذخیره می‌شود)
+let favs = [];
+try { favs = JSON.parse(localStorage.getItem('favs') || '[]'); } catch (e) {}
+const saveFavs = () => { try { localStorage.setItem('favs', JSON.stringify(favs)); } catch (e) {} };
+
+// لایک (شمارنده‌ی عمومی؛ هر دستگاه فقط یک لایک فعال دارد)
+let liked = [];
+try { liked = JSON.parse(localStorage.getItem('liked') || '[]'); } catch (e) {}
+const saveLiked = () => { try { localStorage.setItem('liked', JSON.stringify(liked)); } catch (e) {} };
+
+const minTotal = () => (DATA.shop && DATA.shop.minTotal) || 10000000;
+function shipFee(sub) {
+  const s = DATA.shop || {};
+  if (!s.shippingFee || sub <= 0) return 0;
+  if (s.freeShippingAbove && sub >= s.freeShippingAbove) return 0;
+  return s.shippingFee;
+}
+
+const ICON_FIRE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 1s1 3.2-1 5.6C10.7 8.4 8 9.8 8 13a4 4 0 0 0 8 0c0-1-.3-1.8-.8-2.6 2.6 1.3 4.3 3.8 4.3 6.6A7.5 7.5 0 0 1 12 24a7.5 7.5 0 0 1-7.5-7.5C4.5 9 11 7 13.5 1Z"/></svg>';
+const ICON_CART = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H6"/></svg>';
+
+function toast(t) {
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+async function load() {
+  try {
+    const cached = sessionStorage.getItem('shop');
+    if (cached) { DATA = JSON.parse(cached); paint(); }
+  } catch (e) {}
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'shop' }) });
+    const j = await r.json();
+    if (j.ok) { DATA = j.data; try { sessionStorage.setItem('shop', JSON.stringify(DATA)); } catch (e) {} }
+  } catch (e) {
+    if (!DATA.products.length) { $('grid').innerHTML = '<div class="empty">خطا در دریافت محصولات.<br>اینترنت را چک کنید و دوباره امتحان کنید.</div>'; return; }
+  }
+  // پاک کردن آیتم‌هایی از سبد که دیگر وجود ندارند
+  Object.keys(cart).forEach(id => { if (!DATA.products.some(p => p.id === id)) delete cart[id]; });
+  saveCart();
+  paint();
+}
+
+function paint() {
+  const s = DATA.shop || {};
+  $('shopName').textContent = s.name || 'فروشگاه';
+  document.title = s.name || 'فروشگاه';
+  $('tagline').textContent = (s.tagline || '') + (s.users ? '  |  👥 ' + fa(s.users) + ' کاربر' : '');
+  if (s.logo) $('logo').innerHTML = '<img src="' + esc(s.logo) + '" alt="">';
+  // قیمت دلار بالای صفحه (همان نرخی که مدیر از ربات ثبت می‌کند)
+  const dl = $('dollar');
+  if (dl) {
+    dl.innerHTML = '💵 قیمت دلار: <b>' + fa(Math.round(s.dollar).toLocaleString('en-US')) + ' تومان</b>' +
+      (s.dollarAt ? '<small>  · بروزرسانی: ' + fa(s.dollarAt) + '</small>' : '');
+    dl.style.display = s.dollar > 0 ? '' : 'none';
+  }
+  const an = $('announce');
+  if (an) { an.textContent = s.announce || ''; an.style.display = s.announce ? '' : 'none'; }
+  const bl = $('botLink');
+  if (s.bot) { bl.href = 'https://t.me/' + s.bot; bl.onclick = e => { if (tg) { e.preventDefault(); tg.openTelegramLink('https://t.me/' + s.bot); } }; }
+  else bl.style.display = 'none';
+  renderStories(); drawChips(); drawGrid(); drawBar();
+}
+
+function drawChips() {
+  let h = '<button class="chip ' + (cat === 'all' ? 'on' : '') + '" data-c="all"><span class="i">▦</span>همه</button>';
+  if (favs.length) h += '<button class="chip ' + (cat === '__fav' ? 'on' : '') + '" data-c="__fav"><span class="i">♥</span>علاقه‌مندی‌ها</button>';
+  (DATA.categories || []).forEach(c => {
+    h += '<button class="chip ' + (cat === c.name ? 'on' : '') + '" data-c="' + esc(c.name) + '"><span class="i">' + esc(c.icon || '') + '</span>' + esc(c.name) + '</button>';
+  });
+  $('chips').innerHTML = h;
+}
+$('chips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  cat = b.dataset.c; drawChips(); drawGrid();
+});
+$('q').addEventListener('input', e => { query = norm(e.target.value.trim()); drawGrid(); });
+
+function actionHtml(p) {
+  if (p.stock <= 0) return '<button class="buy notify" data-a="notify" data-id="' + esc(p.id) + '">🔔 خبرم کن</button>';
+  const q = cart[p.id] || 0;
+  if (!q) return '<button class="buy" data-a="add" data-id="' + esc(p.id) + '">خرید محصول ' + ICON_CART + '</button>';
+  return '<div class="step"><button data-a="inc" data-id="' + esc(p.id) + '">+</button><span>' + fa(q) + '</span><button data-a="dec" data-id="' + esc(p.id) + '">−</button></div>';
+}
+
+function notifyMe(id) {
+  const bot = (DATA.shop && DATA.shop.bot) || '';
+  if (!bot) { toast('ربات در دسترس نیست'); return; }
+  const link = 'https://t.me/' + bot + '?start=notify_' + id;
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(link); else window.location.href = link;
+}
+
+function toggleFav(id) {
+  favs = favs.indexOf(id) > -1 ? favs.filter(x => x !== id) : favs.concat([id]);
+  saveFavs();
+  if (cat === '__fav' && favs.indexOf(id) === -1) drawGrid(); else refreshFav(id);
+  drawChips();
+}
+function likeBtn(p, extra) {
+  const on = liked.indexOf(p.id) > -1;
+  return '<button class="lk ' + (on ? 'on ' : '') + (extra || '') + '" data-a="like" data-id="' + esc(p.id) + '">👍 ' + fa(p.likes || 0) + '</button>';
+}
+
+async function toggleLike(id) {
+  const p = DATA.products.find(x => x.id === id); if (!p) return;
+  const wasOn = liked.indexOf(id) > -1;
+  const delta = wasOn ? -1 : 1;
+  liked = wasOn ? liked.filter(x => x !== id) : liked.concat([id]);
+  saveLiked();
+  p.likes = Math.max(0, (p.likes || 0) + delta);
+  refreshLike(id);
+  if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'like', productId: id, delta: delta }) });
+    const j = await r.json();
+    if (j.ok) p.likes = j.likes;
+  } catch (e) {}
+  refreshLike(id);
+}
+
+function refreshLike(id) {
+  const p = DATA.products.find(x => x.id === id); if (!p) return;
+  const on = liked.indexOf(id) > -1;
+  document.querySelectorAll('[data-a="like"][data-id="' + CSS.escape(id) + '"]').forEach(el => {
+    el.classList.toggle('on', on);
+    el.textContent = '👍 ' + fa(p.likes || 0);
+  });
+}
+
+function refreshFav(id) {
+  const el = document.querySelector('#c-' + CSS.escape(id) + ' .fav');
+  if (el) { el.classList.toggle('on', favs.indexOf(id) > -1); el.textContent = favs.indexOf(id) > -1 ? '♥' : '♡'; }
+}
+
+const LOW_BADGE_LEVEL = 10; // اگر موجودی به این عدد یا کمتر برسد، برچسب «آخرین N عدد» نشان داده می‌شود
+
+// دکمه‌ی شناور پشتیبانی: فقط وقتی شماره یا آیدی فروشنده ثبت شده باشد نشان داده می‌شود
+function renderFab() {
+  const s = DATA.shop || {};
+  const phone = s.sellerPhone || '', id = (s.sellerId || '').replace(/^@/, '');
+  const fab = $('fab'); if (!fab) return;
+  fab.style.display = (phone || id) ? 'grid' : 'none';
+  if (!phone && !id) $('fabp').classList.remove('show');
+  $('fabPhone').style.display = phone ? '' : 'none';
+  $('fabPhone').href = phone ? 'tel:' + phone : '#';
+  $('fabPhoneTxt').textContent = phone;
+  $('fabId').style.display = id ? '' : 'none';
+  $('fabId').href = id ? 'https://t.me/' + id : '#';
+  $('fabIdTxt').textContent = id ? '@' + id : '';
+}
+function toggleFab() { $('fabp').classList.toggle('show'); }
+
+// پیشنهاد کالاهای کم‌موجود: فقط در فهرست کامل (بدون فیلتر دسته و جستجو) نشان داده می‌شود
+function renderLowStrip() {
+  const el = $('lowStrip'); if (!el) return;
+  const low = (DATA.products || []).filter(p => p.stock > 0 && p.stock <= LOW_BADGE_LEVEL)
+    .sort((a, b) => a.stock - b.stock).slice(0, 10);
+  if (!low.length || cat !== 'all' || query) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<div class="lowh">⏳ آخرین موجودی‌ها؛ زودتر بخرید</div><div class="lowrow">' + low.map(p =>
+    '<button class="lowit" data-id="' + esc(p.id) + '" onclick="openDetail(this.dataset.id)">' +
+    (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '<div class="ph">🛍</div>') +
+    '<span>' + esc(p.name) + '</span><b>فقط ' + fa(p.stock) + ' عدد مانده</b></button>').join('') + '</div>';
+}
+
+// استعلام موجودی بیشتر: پیام به فروشنده با نام همین محصول در ربات باز می‌شود
+function askStock(pid) { contactSeller(pid); }
+
+// اشتراک‌گذاری محصول: لینکی که با باز شدن، کارت همان محصول را در ربات نشان می‌دهد
+function shareProduct(pid) {
+  const bot = (DATA.shop && DATA.shop.bot) || '';
+  const p = DATA.products.find(x => x.id === pid);
+  if (!bot || !p) { toast('ربات در دسترس نیست، بعداً دوباره امتحان کنید'); return; }
+  const link = 'https://t.me/' + bot + '?start=p_' + pid;
+  const url = 'https://t.me/share/url?url=' + encodeURIComponent(link) +
+    '&text=' + encodeURIComponent(p.name + ' - ' + money(p.price) + ' تومان');
+  if (tg && tg.openTelegramLink) tg.openTelegramLink(url);
+  else window.open(url, '_blank');
+}
+
+// مرتب‌سازی فهرست محصولات: با تغییر انتخاب، فهرست دوباره ساخته می‌شود
+$('sort').addEventListener('change', drawGrid);
+
+/* ======= استوری‌ها: ردیف بالای صفحه و نمایش تمام‌صفحه ======= */
+let STORIES = [], storyI = 0;
+function renderStories() {
+  const el = $('stories'); if (!el) return;
+  STORIES = DATA.stories || [];
+  if (!STORIES.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  el.innerHTML = STORIES.map((s, i) =>
+    '<button class="st-it" onclick="openStory(' + i + ')"><span class="st-ring"><img src="' + esc(s.image) + '" alt=""></span>' +
+    '<span class="st-lbl">' + esc(s.caption ? s.caption.slice(0, 12) : 'استوری') + '</span></button>').join('');
+}
+function openStory(i) { storyI = i; $('sv').style.display = 'flex'; showStory(); }
+function closeStory() { $('sv').style.display = 'none'; }
+function stepStory(d) {
+  storyI += d;
+  if (storyI >= STORIES.length) return closeStory();
+  if (storyI < 0) storyI = 0;
+  showStory();
+}
+function showStory() {
+  const s = STORIES[storyI]; if (!s) return;
+  $('svImg').src = s.image;
+  $('svCap').textContent = s.caption || '';
+  $('svBtn').style.display = s.productId ? '' : 'none';
+  $('svBar').innerHTML = STORIES.map((x, j) => '<i class="' + (j <= storyI ? 'on' : '') + '"></i>').join('');
+}
+function storyProduct() {
+  const s = STORIES[storyI]; if (!s) return;
+  closeStory(); openDetail(s.productId);
+}
+
+function drawGrid() {
+  renderFab();
+  renderLowStrip();
+  const list = (DATA.products || []).filter(p =>
+    (cat === 'all' || (cat === '__fav' ? favs.indexOf(p.id) > -1 : p.category === cat)) &&
+    (!query || norm(p.name + ' ' + (p.desc || '')).indexOf(query) > -1));
+  // مرتب‌سازی بر اساس انتخاب مشتری
+  const sortV = ($('sort') || {}).value || 'def';
+  if (sortV === 'cheap') list.sort((a, b) => a.price - b.price);
+  else if (sortV === 'exp') list.sort((a, b) => b.price - a.price);
+  else if (sortV === 'pop') list.sort((a, b) => (b.likes || 0) - (a.likes || 0));
+  if (!list.length) { $('grid').innerHTML = '<div class="empty">' + (cat === '__fav' ? 'هنوز محصولی را علاقه‌مندی نکرده‌اید ♡' : 'محصولی پیدا نشد 🔍') + '</div>'; return; }
+  $('grid').innerHTML = list.map(p => {
+    const img = p.image ? '<img loading="lazy" src="' + esc(p.image) + '" alt="">' : '<div class="ph">🛍</div>';
+    const isFav = favs.indexOf(p.id) > -1;
+    return '<div class="card" id="c-' + esc(p.id) + '"><div class="pic">' + img +
+      '<button class="fav ' + (isFav ? 'on' : '') + '" data-a="fav" data-id="' + esc(p.id) + '">' + (isFav ? '♥' : '♡') + '</button>' +
+      likeBtn(p, '') +
+      (p.badge ? '<span class="badge">پرفروش ' + ICON_FIRE + '</span>' : '') +
+      (p.stock <= 0 ? '<div class="oos">ناموجود</div>' : '') +
+      (p.stock > 0 && p.stock <= LOW_BADGE_LEVEL ? '<span class="lowb">آخرین ' + fa(p.stock) + ' عدد</span>' : '') + '</div>' +
+      '<div class="info"><div class="nm">' + esc(p.name) + '</div>' +
+      (p.desc ? '<div class="ds">' + esc(p.desc) + '</div>' : '') +
+      (p.ratingCount ? '<div class="rt">★ ' + fa(p.rating) + ' (' + fa(p.ratingCount) + ' نظر)</div>' : '') +
+      (p.minQty > 1 ? '<div class="mq">حداقل سفارش: ' + fa(p.minQty) + ' عدد</div>' : '') +
+      '<div class="pr">' + money(p.price) + ' <small>تومان</small></div>' +
+      '<div class="act">' + actionHtml(p) + '</div></div></div>';
+  }).join('');
+}
+
+function refreshCard(id) {
+  const p = DATA.products.find(x => x.id === id), el = document.querySelector('#c-' + CSS.escape(id) + ' .act');
+  if (p && el) el.innerHTML = actionHtml(p);
+}
+
+function setQty(id, q) {
+  const p = DATA.products.find(x => x.id === id); if (!p) return;
+  q = Math.max(0, Math.min(q, p.stock, 99));
+  // حداقل تعداد برای بعضی دسته‌ها (مثلاً کابل و هندزفری)
+  const prev = cart[id] || 0, minQ = p.minQty || 1;
+  if (q > 0 && minQ > p.stock) { q = 0; toast('موجودی این محصول کمتر از حداقل سفارش است'); }
+  if (q > 0 && q < minQ) {
+    if (q < prev) { q = 0; } else { q = minQ; toast('حداقل سفارش از این محصول ' + fa(minQ) + ' عدد است'); }
+  }
+  if (q === prev && q === p.stock && q > 0) toast('بیشتر از موجودی انبار نمی‌شود');
+  if (q) cart[id] = q; else delete cart[id];
+  saveCart(); refreshCard(id); drawBar();
+  if ($('sheet').classList.contains('show')) drawCart();
+  if (detailId === id) drawDetailAct();
+  if (tg && tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
+}
+
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]');
+  if (!b) { const c = e.target.closest('.card'); if (c && c.id) openDetail(c.id.slice(2)); return; }
+  const id = b.dataset.id, q = cart[id] || 0;
+  if (b.dataset.a === 'fav') return toggleFav(id);
+  if (b.dataset.a === 'like') return toggleLike(id);
+  if (b.dataset.a === 'notify') return notifyMe(id);
+  setQty(id, b.dataset.a === 'dec' ? q - 1 : q + 1);
+});
+
+function totals() {
+  let n = 0, t = 0;
+  Object.keys(cart).forEach(id => { const p = DATA.products.find(x => x.id === id); if (p) { n += cart[id]; t += cart[id] * p.price; } });
+  return { n, t };
+}
+function drawBar() {
+  const { n, t } = totals();
+  $('bar').classList.toggle('show', n > 0);
+  $('bCnt').textContent = fa(n);
+  $('bTot').textContent = money(t) + ' تومان';
+}
+
+function drawCart() {
+  const ids = Object.keys(cart).filter(id => DATA.products.some(p => p.id === id));
+  if (!ids.length) {
+    // سبد خالی: چند محصول محبوب را پیشنهاد می‌دهیم
+    const top = (DATA.products || []).filter(p => p.stock > 0).sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 3);
+    const sg = top.length ? '<div class="sugg"><div class="sugg-h">🔥 محبوب‌ترین کالاها</div>' + top.map(p =>
+      '<div class="it sg-it" data-id="' + esc(p.id) + '">' + (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '<div class="ph">🛍</div>') +
+      '<div class="m"><b>' + esc(p.name) + '</b><span>' + money(p.price) + ' تومان</span></div></div>').join('') + '</div>' : '';
+    $('cartList').innerHTML = '<div class="empty" style="padding:30px 0">سبد خرید خالیه</div>' + sg;
+    $('shipProg').style.display = 'none';
+    $('cTot').textContent = '۰'; $('go').disabled = true; return;
+  }
+  $('go').disabled = false;
+  $('cartList').innerHTML = ids.map(id => {
+    const p = DATA.products.find(x => x.id === id);
+    return '<div class="it">' + (p.image ? '<img src="' + esc(p.image) + '" alt="">' : '<div class="ph">🛍</div>') +
+      '<div class="m"><b>' + esc(p.name) + '</b><span>' + money(p.price * cart[id]) + ' تومان</span></div>' +
+      '<div class="qty"><button data-a="inc" data-id="' + esc(id) + '">+</button><b>' + fa(cart[id]) + '</b><button data-a="dec" data-id="' + esc(id) + '">−</button></div></div>';
+  }).join('');
+  drawSummary();
+}
+function drawSummary() {
+  const sub = totals().t, ship = shipFee(sub), min = minTotal();
+  $('cShip').textContent = ship ? money(ship) + ' تومان' : 'پس کرایه';
+  $('cTot').textContent = money(sub + ship) + ' تومان';
+  const short = sub < min;
+  $('minNote').textContent = 'احتراماً، مبلغ فاکتور باید حداقل ' + fa(min / 1000000) + ' میلیون تومان باشد. لطفاً سبد خرید خود را تکمیل فرمایید. 🙏';
+  $('minNote').classList.toggle('show', short);
+  $('go').disabled = short;
+
+  // نوار پیشرفت ارسال رایگان
+  const sh = DATA.shop || {}, fr = Number(sh.freeShippingAbove) || 0, sp = $('shipProg');
+  if (fr && sh.shippingFee && sub > 0) {
+    sp.style.display = 'block';
+    sp.innerHTML = sub >= fr
+      ? '🎉 تبریک! هزینه ارسال این سفارش <b>پس کرایه</b> است.'
+      : 'تا ارسال رایگان، ' + money(fr - sub) + ' تومان دیگر خرید کنید.<div class="pbar"><i style="width:' + Math.round(sub / fr * 100) + '%"></i></div>';
+  } else sp.style.display = 'none';
+}
+$('cartList').addEventListener('click', e => {
+  // کلیک روی پیشنهاد محبوب (سبد خالی): باز شدن جزئیات همان محصول
+  const sg = e.target.closest('.sg-it');
+  if (sg) { closeCart(); setTimeout(() => openDetail(sg.dataset.id), 250); return; }
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const id = b.dataset.id, q = cart[id] || 0;
+  setQty(id, b.dataset.a === 'dec' ? q - 1 : q + 1);
+  if (!Object.keys(cart).length) closeCart();
+});
+
+/* ======= صفحه جزئیات محصول (با توضیحات کامل) ======= */
+let detailId = null;
+// اگر محصول گالری (چند عکس) داشته باشد، عکس‌ها به‌صورت کشویی افقی نمایش داده می‌شوند
+function galleryHtml(p) {
+  const imgs = [p.image].concat(p.gallery || []).filter(Boolean);
+  if (imgs.length > 1) return '<div class="gal">' + imgs.map(u => '<img loading="lazy" src="' + esc(u) + '" alt="">').join('') + '</div>';
+  return p.image ? '<img class="dimg" src="' + esc(p.image) + '" alt="">' : '<div class="dimg dph">🛍</div>';
+}
+function openDetail(id) {
+  const p = DATA.products.find(x => x.id === id); if (!p) return;
+  detailId = id;
+  $('dTitle').textContent = p.name;
+  $('dBody').innerHTML =
+    galleryHtml(p) +
+    (p.badge ? '<div class="dhot">پرفروش ' + ICON_FIRE + '</div>' : '') +
+    '<div class="dpr">' + money(p.price) + ' <small>تومان</small></div>' +
+    likeBtn(p, 'st') +
+    '<div class="dmrow"><div class="dmeta">' + (p.category ? 'دسته: ' + esc(p.category) + ' · ' : '') + (p.stock > 0 ? 'موجودی: ' + fa(p.stock) : 'ناموجود') +
+      (p.ratingCount ? ' · ★ ' + fa(p.rating) : '') + (p.minQty > 1 ? ' · حداقل سفارش: ' + fa(p.minQty) : '') + '</div>' +
+      '<button class="stkq" data-id="' + esc(p.id) + '" onclick="askStock(this.dataset.id)">📦 استعلام موجودی بیشتر</button><button class="shb" data-id="' + esc(p.id) + '" onclick="shareProduct(this.dataset.id)">🔗 اشتراک‌گذاری</button></div>' +
+    '<div class="dtitle">توضیحات محصول</div>' +
+    '<div class="ddesc">' + (p.desc ? esc(p.desc) : 'برای این محصول توضیحی ثبت نشده.') + '</div>' +
+    '<div id="dRev"></div>';
+  drawDetailAct();
+  $('dov').classList.add('show'); $('dsheet').classList.add('show');
+  loadReviews(id);
+}
+
+async function loadReviews(id) {
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'reviews', productId: id }) });
+    const j = await r.json();
+    if (detailId !== id || !j.ok || !j.data.length) return;
+    $('dRev').innerHTML = '<div class="dtitle">نظر مشتری‌ها</div>' + j.data.map(v =>
+      '<div class="rev"><b>' + esc(v.name) + '</b> <span class="st">' + '★'.repeat(v.rating) + '</span><br>' + esc(v.comment) + '</div>').join('');
+  } catch (e) {}
+}
+function drawDetailAct() {
+  const p = DATA.products.find(x => x.id === detailId); if (!p) return;
+  $('dAct').innerHTML = actionHtml(p);
+}
+function closeDetail() {
+  detailId = null;
+  $('dov').classList.remove('show'); $('dsheet').classList.remove('show');
+}
+$('dAct').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a]'); if (!b) return;
+  const id = b.dataset.id, q = cart[id] || 0;
+  if (b.dataset.a === 'notify') return notifyMe(id);
+  setQty(id, b.dataset.a === 'dec' ? q - 1 : q + 1);
+});
+
+$('dBody').addEventListener('click', e => {
+  const b = e.target.closest('button[data-a="like"]'); if (b) toggleLike(b.dataset.id);
+});
+
+function openCart() { drawCart(); $('ov').classList.add('show'); $('sheet').classList.add('show'); }
+function closeCart() { $('ov').classList.remove('show'); $('sheet').classList.remove('show'); }
+
+// ارتباط با فروشنده: گفتگو با ربات باز می‌شود تا مشتری پیامش را برای فروشنده بفرستد
+function contactSeller(pid) {
+  // اگر آیدی فروشنده ثبت شده باشد، مشتری مستقیم وارد پیوی فروشنده می‌شود
+  const sellerId = ((DATA.shop && DATA.shop.sellerId) || '').replace(/^@/, '');
+  if (sellerId) {
+    const direct = 'https://t.me/' + sellerId;
+    if (tg && tg.openTelegramLink) { tg.openTelegramLink(direct); setTimeout(function () { tg.close(); }, 500); }
+    else window.location.href = direct;
+    return;
+  }
+  const bot = (DATA.shop && DATA.shop.bot) || '';
+  if (!bot) { toast('ربات در دسترس نیست، بعداً دوباره امتحان کنید'); return; }
+  const link = 'https://t.me/' + bot + '?start=seller' + (pid ? '_' + pid : '');
+  if (tg && tg.openTelegramLink) {
+    tg.openTelegramLink(link);
+    setTimeout(function () { tg.close(); }, 500);
+  } else window.location.href = link;
+}
+
+async function checkout() {
+  const items = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
+  if (!items.length) return;
+  if (totals().t < minTotal()) { drawSummary(); toast('مبلغ فاکتور کمتر از حداقل مجاز است'); return; }
+  const under = DATA.products.find(p => (cart[p.id] || 0) > 0 && cart[p.id] < (p.minQty || 1));
+  if (under) { toast('حداقل سفارش از «' + under.name + '» ' + fa(under.minQty) + ' عدد است'); return; }
+  const bot = (DATA.shop && DATA.shop.bot) || '';
+  if (!bot) { toast('ربات در دسترس نیست، بعداً دوباره امتحان کنید'); return; }
+  const btn = $('go'); btn.disabled = true; btn.textContent = 'در حال ثبت سفارش...';
+  try {
+    const r = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'saveCart', items: items }) });
+    const j = await r.json();
+    if (j.ok && j.token) {
+      const link = 'https://t.me/' + bot + '?start=cart_' + j.token;
+      cart = {}; saveCart();
+      if (tg && tg.openTelegramLink) {
+        tg.openTelegramLink(link);
+        setTimeout(function () { tg.close(); }, 500); // بستن مینی‌اپ تا مشتری مستقیم وارد چت ربات شود
+      } else window.location.href = link;
+      setTimeout(function () { btn.disabled = false; btn.textContent = 'ثبت سفارش و پرداخت'; }, 3000);
+      return;
+    }
+    toast('ثبت سفارش انجام نشد، دوباره تلاش کنید');
+  } catch (e) {
+    toast('خطای ارتباط با سرور، دوباره تلاش کنید');
+  }
+  btn.disabled = false; btn.textContent = 'ثبت سفارش و پرداخت';
+}
+
+load();
+</script>
+</body>
+</html>

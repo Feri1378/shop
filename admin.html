@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ثبت سریع قیمت و موجودی</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--green:#2e9e48;--dark:#1f2326;--muted:#8a9099;--bg:#f4f5f7;--line:#e7e9ed;--warn:#b91c1c}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Vazirmatn',Tahoma,sans-serif;background:var(--bg);color:#1c2024;padding-bottom:96px}
+header{background:var(--dark);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:18px}
+header p{margin:4px 0 0;font-size:12px;color:#c3c8ce;line-height:1.8}
+.wrap{padding:12px}
+.login{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;display:none}
+.login p{margin:0 0 8px;font-size:13px;color:var(--muted)}
+.in{height:42px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:15px;font-family:inherit;background:#fff;outline:none;width:100%}
+.in:focus{border-color:var(--green)}
+.in.bad{border-color:var(--warn);background:#fff5f5}
+.btn{height:42px;padding:0 16px;border-radius:10px;background:var(--green);color:#fff;font-weight:700;font-family:inherit;border:0;font-size:14px;margin-top:8px;width:100%}
+.row{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.row.changed{border-color:var(--green);box-shadow:0 0 0 2px #d8f0df}
+.nm{font-weight:800;font-size:15px;line-height:1.7}
+.meta{font-size:12px;color:var(--muted);margin-bottom:6px}
+.cur{font-size:13px;color:#444;margin-bottom:8px;line-height:1.9}
+.cur b{color:var(--green)}
+.ctl{display:flex;gap:8px;align-items:center}
+.ctl input{flex:1;min-width:0;text-align:center;font-weight:700}
+.ctl .stk{flex:0 0 92px}
+.ctl button{height:42px;padding:0 16px;border-radius:10px;background:var(--green);color:#fff;font-weight:700;font-family:inherit;border:0;font-size:14px;flex:none}
+.ctl button[disabled]{background:#c9cdd3}
+.err{color:var(--warn);font-size:12px;margin-top:6px;display:none}
+.err.show{display:block}
+.bottom{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom))}
+.bottom button{width:100%;height:48px;border:0;border-radius:12px;background:var(--dark);color:#fff;font-weight:800;font-size:15px;font-family:inherit}
+.bottom button[disabled]{background:#c9cdd3}
+.empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%) translateY(-90px);background:#222;color:#fff;padding:10px 18px;border-radius:12px;font-size:13px;z-index:50;transition:.25s;max-width:90%}
+.toast.show{transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ ثبت سریع قیمت و موجودی</h1>
+  <p>قیمت را به هزار تومان بنویسید؛ مثلاً 125 یعنی ۱۲۵ هزار تومان. موجودی را هم می‌توانید عوض کنید؛ خالی بماند تغییری نمی‌کند.</p>
+</header>
+
+<div class="wrap">
+  <div class="login" id="loginBox">
+    <p>کلید مدیر را یک‌بار وارد کنید (روی همین دستگاه ذخیره می‌شود):</p>
+    <input class="in" id="keyIn" type="password" placeholder="کلید مدیر">
+    <button class="btn" onclick="saveKey()">ورود</button>
+  </div>
+  <input class="in" id="search" type="search" placeholder="جستجوی محصول..." oninput="draw()" style="margin-bottom:12px">
+  <div id="list"></div>
+</div>
+
+<div class="bottom"><button id="saveAll" disabled onclick="saveAll()">ثبت همه‌ی تغییرها</button></div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ======= آدرس Web App اپ اسکریپت (همان آدرس مینی‌اپ) ======= */
+const API_URL = 'https://script.google.com/macros/s/AKfycbzQgLIT51gZsVaGpmBdjngJMK2HKZ7vw_IKbL2XIeF9j4-FL1oKe6n1hYaZH4Hex8hU5g/exec';
+/* ============================================================ */
+
+const tg = window.Telegram && Telegram.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
+
+const $ = id => document.getElementById(id);
+const fa = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toEn = s => String(s == null ? '' : s).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[,٬\s]/g, '');
+const thou = p => { const k = p / 1000; return String(Math.round(k * 10) / 10); };
+
+let KEY = '';
+try { KEY = localStorage.getItem('adminKey') || ''; } catch (e) {}
+let PRODUCTS = [];
+const changes = {}; // id -> { k: قیمت جدید به هزار تومان, s: موجودی جدید }
+
+function toast(t) {
+  const el = $('toast'); el.textContent = t; el.classList.add('show');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+async function api(body) {
+  const r = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ key: KEY }, body)),
+  });
+  return r.json();
+}
+
+function saveKey() {
+  KEY = $('keyIn').value.trim();
+  try { localStorage.setItem('adminKey', KEY); } catch (e) {}
+  load();
+}
+
+async function load() {
+  if (!KEY) { $('loginBox').style.display = 'block'; return; }
+  try {
+    const j = await api({ action: 'adminProducts' });
+    if (!j.ok) {
+      KEY = '';
+      try { localStorage.removeItem('adminKey'); } catch (e) {}
+      $('loginBox').style.display = 'block';
+      toast('کلید مدیر درست نیست');
+      return;
+    }
+    PRODUCTS = j.data;
+    $('loginBox').style.display = 'none';
+    draw();
+  } catch (e) {
+    toast('خطای ارتباط با سرور، دوباره تلاش کنید');
+  }
+}
+
+function draw() {
+  const q = $('search').value.trim().toLowerCase();
+  const list = PRODUCTS.filter(p => !q || p.name.toLowerCase().indexOf(q) > -1);
+  if (!list.length) { $('list').innerHTML = '<div class="empty">محصولی پیدا نشد</div>'; updateAll(); return; }
+  $('list').innerHTML = list.map(p => {
+    const c = changes[p.id] || {};
+    const has = c.k !== undefined || c.s !== undefined;
+    const id = esc(p.id);
+    return '<div class="row' + (has ? ' changed' : '') + '">' +
+      '<div class="nm">' + esc(p.name) + (p.active ? '' : ' ⛔') + '</div>' +
+      '<div class="meta">' + esc(p.category || '—') + '</div>' +
+      '<div class="cur">قیمت فعلی: <b>' + fa(thou(p.price)) + ' هزار تومان</b> · موجودی فعلی: <b>' + fa(p.stock) + '</b></div>' +
+      '<div class="ctl">' +
+        '<input class="in" inputmode="numeric" placeholder="قیمت (هزار)" value="' + (c.k !== undefined ? fa(c.k) : '') + '" data-id="' + id + '" data-f="k" oninput="onIn(this)">' +
+        '<input class="in stk" inputmode="numeric" placeholder="موجودی" value="' + (c.s !== undefined ? fa(c.s) : '') + '" data-id="' + id + '" data-f="s" oninput="onIn(this)">' +
+        '<button data-id="' + id + '" onclick="saveOne(this.dataset.id)"' + (has ? '' : ' disabled') + '>ثبت</button>' +
+      '</div>' +
+      '<div class="err" id="e-' + id + '">عدد نامعتبر است (قیمت مثلاً 125، موجودی مثلاً 4)</div>' +
+    '</div>';
+  }).join('');
+  updateAll();
+}
+
+function onIn(el) {
+  const id = el.dataset.id, f = el.dataset.f;
+  const raw = toEn(el.value);
+  const row = el.closest('.row');
+  const c = changes[id] || {};
+  let v; // undefined = خالی، null = نامعتبر، عدد = مقدار درست
+  if (raw === '') v = undefined;
+  else if (f === 'k') v = (/^\d+(\.\d+)?$/.test(raw) && Number(raw) > 0 && Number(raw) < 100000) ? Number(raw) : null;
+  else v = (/^\d+$/.test(raw) && Number(raw) < 100000) ? Number(raw) : null;
+
+  if (v === null) delete c[f];
+  else if (v === undefined) delete c[f];
+  else c[f] = v;
+  el.classList.toggle('bad', v === null);
+
+  if (Object.keys(c).length) changes[id] = c; else delete changes[id];
+  const has = changes[id] !== undefined;
+  row.classList.toggle('changed', has);
+  row.querySelector('.err').classList.toggle('show', !!row.querySelector('input.bad'));
+  row.querySelector('button').disabled = !has;
+  updateAll();
+}
+
+function updateAll() {
+  const n = Object.keys(changes).length;
+  $('saveAll').disabled = n === 0;
+  $('saveAll').textContent = n ? 'ثبت همه‌ی تغییرها (' + fa(n) + ')' : 'ثبت همه‌ی تغییرها';
+}
+
+function saveOne(id) {
+  const c = changes[id];
+  if (c) saveItems([Object.assign({ id: id }, c)]);
+}
+
+function saveAll() {
+  const items = Object.keys(changes).map(id => Object.assign({ id: id }, changes[id]));
+  if (items.length) saveItems(items);
+}
+
+async function saveItems(items) {
+  try {
+    const j = await api({ action: 'adminSetPrices', items: items });
+    if (!j.ok) { toast(j.error === 'forbidden' ? 'کلید مدیر درست نیست' : 'ثبت انجام نشد'); return; }
+    items.forEach(it => {
+      if (j.bad && j.bad.indexOf(it.id) > -1) return;
+      const p = PRODUCTS.find(x => x.id === it.id);
+      if (p) {
+        if (it.k !== undefined) p.price = Math.round(it.k * 1000);
+        if (it.s !== undefined) p.stock = it.s;
+      }
+      delete changes[it.id];
+    });
+    const badN = j.bad ? j.bad.length : 0;
+    toast('✅ ' + fa(j.updated) + ' مورد ثبت شد' + (badN ? ' — ' + fa(badN) + ' مورد نامعتبر ماند' : ''));
+    draw();
+  } catch (e) {
+    toast('خطای ارتباط با سرور، دوباره تلاش کنید');
+  }
+}
+
+load();
+</script>
+</body>
+</html>
